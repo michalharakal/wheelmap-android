@@ -2,7 +2,6 @@ package org.wheelmap.android.ui;
 
 import java.util.HashMap;
 
-import org.mapsforge.android.maps.GeoPoint;
 import org.mapsforge.android.maps.MapController;
 import org.mapsforge.android.maps.MapView;
 import org.wheelmap.android.R;
@@ -17,6 +16,7 @@ import android.app.Fragment;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,6 +25,9 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 public class POIDetailFragment extends Fragment {
+	
+	private final static String TAG = "POIDetailFragment";
+
 
 	private TextView nameText = null;
 	private TextView categoryText = null;
@@ -50,15 +53,15 @@ public class POIDetailFragment extends Fragment {
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
-		        super.onCreate(savedInstanceState);
-    }
-	
-	
-    @Override
+		super.onCreate(savedInstanceState);
+	}
+
+
+	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
-	            Bundle savedInstanceState) {
-    	View rootView = (View) inflater.inflate(R.layout.activity_detail, container, true);
-     	mSupportManager = WheelmapApp.getSupportManager();
+			Bundle savedInstanceState) {
+		View rootView = (View) inflater.inflate(R.layout.activity_detail, container, true);
+		mSupportManager = WheelmapApp.getSupportManager();
 		System.gc();
 
 		nameText = (TextView) rootView.findViewById(R.id.title_name);
@@ -97,7 +100,7 @@ public class POIDetailFragment extends Fragment {
 				//onEditWheelchairState(v);
 			}
 		});
-		*/
+		 */
 
 		//mapView = (MapView) rootView findViewById(R.id.map);
 
@@ -107,23 +110,16 @@ public class POIDetailFragment extends Fragment {
 		//mapController = mapView.getController();
 		//mapController.setZoom(18);
 
-		/*
-		poiID = getIntent().getLongExtra(Wheelmap.POIs.EXTRAS_POI_ID, -1);
-		Log.d( TAG, "onCreate: poiID = " + poiID );
 
-		if (poiID != -1) {
-			load();
-		}
-		 */
 		return rootView;
-    }
-    
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-    }
-    
-    private void setWheelchairState(WheelchairState newState) {
+	}
+
+	@Override
+	public void onActivityCreated(Bundle savedInstanceState) {
+		super.onActivityCreated(savedInstanceState);
+	}
+
+	private void setWheelchairState(WheelchairState newState) {
 		mWheelChairState = newState;
 		mStateIcon.setImageDrawable(mSupportManager
 				.lookupWheelDrawable(newState.getId()));
@@ -131,8 +127,19 @@ public class POIDetailFragment extends Fragment {
 				mWheelchairStateTextColorMap.get(newState)));
 		mWheelchairStateText.setText(mWheelchairStateTextsMap.get(newState));
 	}
-    
-    private void load() {
+
+	public void upDatePOI(Long newpoiID) {
+      
+		poiID = newpoiID;
+
+		Log.d( TAG, "onCreate: poiID = " + newpoiID );
+
+		if (poiID != -1) {
+			load();
+		}
+	}
+
+	private void load() {
 
 		// Use the ContentUris method to produce the base URI for the contact
 		// with _ID == 23.
@@ -175,7 +182,7 @@ public class POIDetailFragment extends Fragment {
 		mapView.getOverlays().clear();
 		mapView.getOverlays().add(overlay);
 		mapController.setCenter(new GeoPoint(lat, lon));
-		*/
+		 */
 		cur.close();
 	}
 }

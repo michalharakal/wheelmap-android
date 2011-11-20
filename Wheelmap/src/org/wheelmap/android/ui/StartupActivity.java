@@ -147,7 +147,7 @@ public class StartupActivity extends Activity implements
 
 	private void startupApp() {
 		Intent intent = new Intent(getApplicationContext(),
-				POIsListActivity.class);
+				FragmentActivity.class);
 		startActivity(intent);
 		finish();
 		overridePendingTransition(R.anim.fade_in, R.anim.fade_out);

@@ -1,7 +1,6 @@
 package org.wheelmap.android.ui;
 
 import org.wheelmap.android.R;
-import org.wheelmap.android.ui.POIDetailFragment.POIDetailFragmentUpdater;
 import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
@@ -9,7 +8,7 @@ import android.net.Uri;
 import android.os.Bundle;
 
 
-public class FragmentActivity extends Activity implements POIDetailFragmentUpdater {
+public class FragmentActivity extends Activity {
   private static final String FRAGMENT_NAME_DETAIL = "Detail";
 
   @Override
@@ -52,11 +51,5 @@ public class FragmentActivity extends Activity implements POIDetailFragmentUpdat
       ft.commit();
     }
   }
-
-  @Override
-  public void Update() {
-    // TODO Auto-generated method stub
-
-  }
-
+ 
 }
