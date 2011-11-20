@@ -47,7 +47,6 @@ limitations under the License.
             </activity>
            
         <activity
-<<<<<<< HEAD
             android:name="org.wheelmap.android.ui.POIsListActivity"
             android:theme="@style/Theme.IOSched" 
             android:label="@string/app_name"/>
@@ -56,12 +55,9 @@ limitations under the License.
             android:name="org.wheelmap.android.ui.FragmentActivity"
             android:theme="@style/Theme.IOSched" 
             android:label="@string/app_name"/>
-                       
-=======
             android:label="@string/app_name"
             android:name="org.wheelmap.android.ui.POIsListActivity" />
 
->>>>>>> bb0f2ca3caf5c313704d88fee704ddcb87383c4a
         <activity
             android:name="org.wheelmap.android.ui.FragmentActivity"
             android:theme="@style/Theme.IOSched"
