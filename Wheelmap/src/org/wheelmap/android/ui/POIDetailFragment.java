@@ -2,14 +2,20 @@ package org.wheelmap.android.ui;
 
 import java.util.HashMap;
 
+import org.mapsforge.android.maps.GeoPoint;
 import org.mapsforge.android.maps.MapController;
 import org.mapsforge.android.maps.MapView;
 import org.wheelmap.android.R;
 import org.wheelmap.android.app.WheelmapApp;
 import org.wheelmap.android.manager.SupportManager;
+import org.wheelmap.android.manager.SupportManager.NodeType;
+import org.wheelmap.android.model.POIHelper;
+import org.wheelmap.android.model.Wheelmap;
 
 import wheelmap.org.WheelchairState;
 import android.app.Fragment;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,11 +26,6 @@ import android.widget.TextView;
 
 public class POIDetailFragment extends Fragment {
 
-	interface POIDetailFragmentUpdater {
-		void Update();
-	}
-
-	// private ImageView iconImage = null;
 	private TextView nameText = null;
 	private TextView categoryText = null;
 	private TextView nodetypeText = null;
@@ -116,5 +117,66 @@ public class POIDetailFragment extends Fragment {
 		 */
 		return rootView;
     }
+    
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+    }
+    
+    private void setWheelchairState(WheelchairState newState) {
+		mWheelChairState = newState;
+		mStateIcon.setImageDrawable(mSupportManager
+				.lookupWheelDrawable(newState.getId()));
+		mWheelchairStateText.setTextColor(getResources().getColor(
+				mWheelchairStateTextColorMap.get(newState)));
+		mWheelchairStateText.setText(mWheelchairStateTextsMap.get(newState));
+	}
+    
+    private void load() {
+
+		// Use the ContentUris method to produce the base URI for the contact
+		// with _ID == 23.
+		Uri poiUri = Uri.withAppendedPath(Wheelmap.POIs.CONTENT_URI_POI_ID,
+				String.valueOf(poiID));
+
+		// Then query for this specific record:
+		Cursor cur =  getActivity().managedQuery(poiUri, null, null, null, null);
+
+		if (cur.getCount() < 1) {
+			cur.close();
+			return;
+		}
+
+		cur.moveToFirst();
+		WheelchairState state = POIHelper.getWheelchair(cur);
+		String name = POIHelper.getName(cur);
+		String comment = POIHelper.getComment(cur);
+		int lat = (int) (POIHelper.getLatitude(cur) * 1E6);
+		int lon = (int) (POIHelper.getLongitude(cur) * 1E6);
+		int nodeTypeId = POIHelper.getNodeTypeId(cur);
+		int categoryId = POIHelper.getCategoryId(cur);
+
+		NodeType nodeType = mSupportManager.lookupNodeType(nodeTypeId);
+		// iconImage.setImageDrawable(nodeType.iconDrawable);
+
+		setWheelchairState(state);
+		nameText.setText(name);
+		String category = mSupportManager.lookupCategory(categoryId).localizedName;
+		categoryText.setText(category);
+		nodetypeText.setText(nodeType.localizedName);
+		commentText.setText(comment);
+		addressText.setText(POIHelper.getAddress(cur));
+		websiteText.setText(POIHelper.getWebsite(cur));
+		phoneText.setText(POIHelper.getPhone(cur));
+
+		/*
+		POIMapsforgeOverlay overlay = new POIMapsforgeOverlay();
+		overlay.setItem(name, comment, nodeType, state, lat, lon);
+		mapView.getOverlays().clear();
+		mapView.getOverlays().add(overlay);
+		mapController.setCenter(new GeoPoint(lat, lon));
+		*/
+		cur.close();
+	}
 }
 
