@@ -28,6 +28,12 @@ import android.os.Handler;
 import android.os.ResultReceiver;
 import android.util.Log;
 
+/**
+ * Provide centralized access to a good location.
+ * It uses all location providers available and retrieves
+ * with some heuristics the latest good location information.
+ * @author Michal Harakal, Michael Kroez
+ */
 public class MyLocationManager {
 	private final static String TAG = "mylocationmanager";
 
@@ -52,9 +58,14 @@ public class MyLocationManager {
 	private static final long TIME_GPS_UPDATE_INTERVAL = 1000 * 10;
 	private static final float TIME_GPS_UPDATE_DISTANCE = 20f;
 	private static final long TIME_NETWORK_SUPERSEED_TIME = 1000 * 25;
-	private static final long TIME_GPS_SUPERSEED_TIME = 1000 * 9;
+	// private static final long TIME_GPS_SUPERSEED_TIME = 1000 * 9;
 	private static final float ACCURACY_MAX_REQUIRE = 500;
 	
+	/**
+	 * create instance. As MyLocationManager implements the singleton pattern
+	 * this method is private.
+	 * @param context application context to be used
+	 */
 	private MyLocationManager(Context context) {
 
 		mLocationManager = (LocationManager) context
@@ -79,6 +90,11 @@ public class MyLocationManager {
 
 	}
 
+	/**
+	 * create or retrieve the singleton instance
+	 * @param context application context
+	 * @return instance of MyLocationManager
+	 */
 	public static MyLocationManager initOnce(Context context) {
 		if (INSTANCE == null) {
 			INSTANCE = new MyLocationManager(context);
@@ -87,12 +103,21 @@ public class MyLocationManager {
 		return INSTANCE;
 	}
 
+	/**
+	 * delete the singleton instance, detach all receivers and unregister from location updates
+	 */
 	public void clear() {
 		releaseLocationUpdates();
 		mReceiver.clearReceiver();
 		INSTANCE = null;
 	}
 
+	/**
+	 * Get the instance of the location manager and also register a new receiver.
+	 * @param receiver new receiver to be registered
+	 * @param resendLast true if last message shall be resent
+	 * @return singleton insatnce of MyLocationManager
+	 */
 	public static MyLocationManager get(ResultReceiver receiver,
 			boolean resendLast) {
 
@@ -100,10 +125,19 @@ public class MyLocationManager {
 		return INSTANCE;
 	}
 
+	/**
+	 * get the last "best" location calculated
+	 * @return latest location retrieved
+	 */
 	public Location getLastLocation() {
 		return mBestLastKnownLocation;
 	}
 
+	/**
+	 * register a new result receiver
+	 * @param receiver new result receiver to register
+	 * @param resendLast true if the last message shall be resent
+	 */
 	public void register(ResultReceiver receiver, boolean resendLast) {
 		if (mReceiver.getReceiverCount() == 0) {
 			requestLocationUpdates();
@@ -112,12 +146,19 @@ public class MyLocationManager {
 			mReceiver.addReceiver(receiver, resendLast);
 	}
 
+	/**
+	 * register a new result receiver, don't send last message
+	 * @param receiver new result receiver to register
+	 */
 	public void release(ResultReceiver receiver) {
 		mReceiver.removeReceiver(receiver);
 		if (mReceiver.getReceiverCount() == 0)
 			releaseLocationUpdates();
 	}
 
+	/**
+	 * register for location updates from GPS and network
+	 */
 	private void requestLocationUpdates() {
 		if (!doesRequestUpdates) {
 			Log.d(TAG, "requestLocationUpdates");
@@ -131,6 +172,9 @@ public class MyLocationManager {
 		}
 	}
 
+	/**
+	 * unregister from location updates from GPS and network
+	 */
 	private void releaseLocationUpdates() {
 		Log.d(TAG, "releaseLocationUpdates");
 		mLocationManager.removeUpdates(mGPSLocationListener);
@@ -138,6 +182,14 @@ public class MyLocationManager {
 		doesRequestUpdates = false;
 	}
 
+	/**
+	 * use heuristic to calculate the best location to be used.
+	 * If only one provider has a location, return that.
+	 * If both network and GPS have a location, and the GPS is more recent
+	 * than TIME_DISTANCE_LIMIT, then return the GPS location.
+	 * Otherwise return the network location.
+	 * @return
+	 */
 	private Location calcBestLastKnownLocation() {
 		Location networkLocation = mLocationManager
 				.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
@@ -159,12 +211,21 @@ public class MyLocationManager {
 			return networkLocation;
 	}
 
+	/**
+	 * send a message with the last best retrieved location to all registered receivers
+	 */
 	private void notifyReceiver() {
 		Bundle b = new Bundle();
 		b.putParcelable(EXTRA_LOCATION_MANAGER_LOCATION, mBestLastKnownLocation);
 		mReceiver.send(WHAT_LOCATION_MANAGER_UPDATE, b);
 	}
 
+	/**
+	 * inner class for GPS location updates
+	 * 
+	 * @author Michal Harakal, Michael Kroez
+	 *
+	 */
 	private class MyGPSLocationListener implements LocationListener {
 
 		@Override
@@ -200,6 +261,12 @@ public class MyLocationManager {
 		}
 	}
 
+	/**
+	 * inner class for network location updates
+	 * 
+	 * @author Michal Harakal, Michael Kroez
+	 *
+	 */
 	private class MyNetworkLocationListener implements LocationListener {
 		@Override
 		public void onLocationChanged(Location location) {
@@ -243,11 +310,17 @@ public class MyLocationManager {
 		}
 	}
 
+	/*
 	public interface LocationUpdate {
 		public void onNewLocation(Location location);
 	}
+	*/
 	
-	public void updateLocation( Location location ) {
+	/**
+	 * function called by location providers when a new location is received
+	 * @param location new location to be sent to all receivers
+	 */
+	private void updateLocation( Location location ) {
 		mBestLastKnownLocation = location;
 		wasLastKnownLocation = false;
 		notifyReceiver();
