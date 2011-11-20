@@ -33,8 +33,7 @@ import android.util.Log;
  * This class initializes the ARCA framework (for crash reporting), the SupportManager
  * (used for category and nodetype lookup), and the LocationManager.
  * 
- * It implements the Singleton pattern (using the static member "INSTANCE") and allows
- * access to the central SupportManager.
+ * It allows access to the central SupportManager.
  * @author Michal Harakal, Michael Kroez
  *
  */
@@ -91,7 +90,7 @@ public class WheelmapApp extends Application {
 	/**
 	 * Get the instance of the SupportManager. This has been initialized during
 	 * application startup and will _not_ be create on-demand!
-	 * @return single instance of SupportManager created during stratup
+	 * @return single instance of SupportManager created during startup
 	 */
 	public static SupportManager getSupportManager() {
 		if ( INSTANCE == null )
