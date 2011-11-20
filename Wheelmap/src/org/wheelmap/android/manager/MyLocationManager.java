@@ -77,7 +77,7 @@ public class MyLocationManager {
 
 		mBestLastKnownLocation = calcBestLastKnownLocation();
 		if (mBestLastKnownLocation == null) {
-			// Berlin, Andreasstra�e 10
+			// Berlin, AndreasstraÔøΩe 10
 			mBestLastKnownLocation = new Location(LocationManager.NETWORK_PROVIDER);
 			mBestLastKnownLocation.setLongitude(13.431240);
 			mBestLastKnownLocation.setLatitude(52.512523);
