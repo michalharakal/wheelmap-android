@@ -24,6 +24,9 @@ import android.widget.TextView;
 
 
 public class POIDetailFragment extends Fragment {
+  private static final String POI_ID = "poiId";
+
+
   private static final String TAG = "POIDetailFragment";
 
 
@@ -47,11 +50,16 @@ public class POIDetailFragment extends Fragment {
   private SupportManager mSupportManager;
   private ViewGroup mContentView;
 
-  private Long poiID;
+  private long poiID;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+
+    if (null != savedInstanceState) {
+      poiID = savedInstanceState.getLong(POI_ID, 0);
+    }
+
   }
 
 
@@ -115,7 +123,8 @@ public class POIDetailFragment extends Fragment {
   @Override
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
-    if (poiID != -1) {
+
+    if ((poiID != 0) && (null != getActivity())) {
       load();
     }
   }
@@ -134,6 +143,12 @@ public class POIDetailFragment extends Fragment {
     if (null != getActivity()) {
       load();
     }
+  }
+
+  @Override
+  public void onSaveInstanceState(Bundle outState) {
+    outState.putLong(POI_ID, poiID);
+    super.onSaveInstanceState(outState);
   }
 
   private void load() {

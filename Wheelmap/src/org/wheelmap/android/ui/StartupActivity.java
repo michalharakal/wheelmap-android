@@ -23,6 +23,7 @@ import org.wheelmap.android.app.WheelmapApp;
 import org.wheelmap.android.manager.SupportManager;
 import org.wheelmap.android.service.SyncService;
 import org.wheelmap.android.service.SyncServiceException;
+import org.wheelmap.android.ui.mapsforge.TestFragmentActivity;
 import org.wheelmap.android.utils.DetachableResultReceiver;
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -130,6 +131,7 @@ public class StartupActivity extends Activity implements DetachableResultReceive
         }
       }
     }
+
 
     return true;
   }
