@@ -324,7 +324,6 @@ public class POIsMapsforgeActivity extends MapActivity implements
 
 	public void onListClick(View v) {
 		Intent intent = new Intent(this, POIsListActivity.class);
-		intent.putExtra(POIsListActivity.EXTRA_IS_RECREATED, false);
 		intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
 				| Intent.FLAG_ACTIVITY_NO_ANIMATION);
 		startActivity(intent);

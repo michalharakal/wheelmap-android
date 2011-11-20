@@ -26,6 +26,7 @@ import android.util.Log;
  * Proxy {@link ResultReceiver} that offers a listener interface that can be
  * detached. Useful for when sending callbacks to a {@link Service} where a
  * listening {@link Activity} can be swapped out during configuration changes.
+ * @author Michal Harakal, Michael Kroez
  */
 public class DetachableResultReceiver extends ResultReceiver {
 	private static final String TAG = "DetachableResultReceiver";
@@ -38,24 +39,56 @@ public class DetachableResultReceiver extends ResultReceiver {
 		super(handler);
 	}
 
+	/**
+	 * detach the inner receiver
+	 */
 	public void clearReceiver() {
 		mReceiver = null;
 	}
 
+	/**
+	 * attach an inner receiver, without resending the latest received data.
+	 * @param receiver new receiver to be attached
+	 */
 	public void setReceiver(Receiver receiver) {
 		mReceiver = receiver;
 	}
 	
+	/**
+	 * attach an inner receiver and - if needed - resend the latest received data.
+	 * @param receiver new receiver to be attached
+	 * @param resendLast true if the last received data shall be resent
+	 */
 	public void setReceiver(Receiver receiver, boolean resendLast ) {
 		mReceiver = receiver;
 		if ( resendLast )
 			mReceiver.onReceiveResult( resultCode, resultData);
 	}
 
+	/**
+	 * The 'real' receiver object will be called when results have been
+	 * received from the DetachableResultReceiver
+	 * @author Michal Harakal, Michael Kroez
+	 */
 	public interface Receiver {
+		/**
+		 * Called when the DetachableResultReceiver receives a result.
+		 * All data will be passed through
+		 * @param resultCode data received from DetachableResultReceiver
+		 * @param resultData data received from DetachableResultReceiver
+		 */
 		public void onReceiveResult(int resultCode, Bundle resultData);
 	}
 
+	/**
+	 * Called when an event shall be dispatched to the DetachableResultReceiver.
+	 * The data will be passed through the inner Receiver if attached, or just
+	 * dropped if no inner receiver is attached. The data is in any case
+	 * stored in local variables to allow resending if a newly attached receiver
+	 * wants to get them.
+	 * @param resultCode code received
+	 * @param resultData data received
+	 */
 	@Override
 	protected void onReceiveResult(int resultCode, Bundle resultData) {
 		this.resultCode = resultCode;
