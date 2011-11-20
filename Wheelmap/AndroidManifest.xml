@@ -49,6 +49,12 @@ limitations under the License.
         <activity
             android:label="@string/app_name"
             android:name="org.wheelmap.android.ui.POIsListActivity" />
+
+        <activity
+            android:name="org.wheelmap.android.ui.FragmentActivity"
+            android:theme="@style/Theme.IOSched"
+            android:label="@string/app_name"/>
+
         <activity
             android:label="@string/title_pois_map"
             android:launchMode="singleTask"
