@@ -50,6 +50,7 @@ public class PoiListFragment extends ListFragment implements OnRefreshListener,
     private float mDistance;
     private int mFirstVisiblePosition = 0;
     private boolean mIsRecreated;
+    private POIsListCursorAdapter mListAdapter;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -65,8 +66,7 @@ public class PoiListFragment extends ListFragment implements OnRefreshListener,
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.list_fragment, container,
-                false);
+        return inflater.inflate(R.layout.list_fragment, container, false);
     }
 
     @Override
@@ -77,6 +77,9 @@ public class PoiListFragment extends ListFragment implements OnRefreshListener,
 
         PullToRefreshListView listView = (PullToRefreshListView) getListView();
         listView.setOnRefreshListener(this);
+
+        mListAdapter = new POIsListCursorAdapter(getActivity(), null);
+        setListAdapter(mListAdapter);
 
         getLoaderManager().initLoader(0, null, this);
 
@@ -211,16 +214,14 @@ public class PoiListFragment extends ListFragment implements OnRefreshListener,
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        updateRefreshStatus(false);
         Cursor wrappingCursor = createCursorWrapper(data);
-        POIsListCursorAdapter adapter = new POIsListCursorAdapter(
-                getActivity(), wrappingCursor);
-        setListAdapter(adapter);
+        mListAdapter.swapCursor(wrappingCursor);
+        updateRefreshStatus(false);
     }
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
-        setListAdapter(null);
+        mListAdapter.swapCursor(null);
     }
 
 }
