@@ -1,6 +1,7 @@
 package org.wheelmap.android.ui;
 
 import java.util.HashMap;
+
 import org.mapsforge.android.maps.MapController;
 import org.mapsforge.android.maps.MapView;
 import org.wheelmap.android.R;
@@ -9,6 +10,7 @@ import org.wheelmap.android.manager.SupportManager;
 import org.wheelmap.android.manager.SupportManager.NodeType;
 import org.wheelmap.android.model.POIHelper;
 import org.wheelmap.android.model.Wheelmap;
+
 import wheelmap.org.WheelchairState;
 import android.app.Fragment;
 import android.database.Cursor;
@@ -192,6 +194,5 @@ public class POIDetailFragment extends Fragment {
     mapView.getOverlays().add(overlay);
     mapController.setCenter(new GeoPoint(lat, lon));
      */
-    cur.close();
   }
 }
