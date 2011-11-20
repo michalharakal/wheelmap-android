@@ -85,8 +85,8 @@ public class POIDetailActivity extends MapActivity {
 		mSupportManager = WheelmapApp.getSupportManager();
 		System.gc();
 
-		nameText = (TextView) findViewById(R.id.title_name);
-		categoryText = (TextView) findViewById(R.id.title_category);
+		//nameText = (TextView) findViewById(R.id.title_name);
+		//categoryText = (TextView) findViewById(R.id.title_category);
 		nodetypeText = (TextView) findViewById(R.id.nodetype);
 
 		phoneText = (TextView) findViewById(R.id.phone);
