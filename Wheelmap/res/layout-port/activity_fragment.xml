@@ -18,7 +18,7 @@
 	android:orientation="vertical" android:layout_width="match_parent"
 	android:layout_height="match_parent">
 
-	<fragment android:name="com.example.android.honeypad.NoteListFragment"
+	<fragment android:name="org.wheelmap.android.ui.PoiListFragment"
 		android:id="@+id/list" android:layout_weight="1" android:layout_width="match_parent"
 		android:layout_height="0dp" />
 	<LinearLayout android:id="@+id/detail"
