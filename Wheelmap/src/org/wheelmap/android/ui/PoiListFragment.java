@@ -13,7 +13,10 @@ import org.wheelmap.android.utils.DetachableResultReceiver.Receiver;
 
 import wheelmap.org.BoundingBox.Wgs84GeoCoordinates;
 import android.app.ListFragment;
+import android.app.LoaderManager.LoaderCallbacks;
+import android.content.CursorLoader;
 import android.content.Intent;
+import android.content.Loader;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.location.Location;
@@ -25,15 +28,13 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.widget.ListView;
 
 import com.markupartist.android.widget.PullToRefreshListView;
 import com.markupartist.android.widget.PullToRefreshListView.OnRefreshListener;
 
 public class PoiListFragment extends ListFragment implements OnRefreshListener,
-        Receiver {
+        Receiver, LoaderCallbacks<Cursor> {
 
     public static final String TAG = "PoiListFragment";
     private final static double QUERY_DISTANCE_DEFAULT = 0.8;
@@ -49,7 +50,6 @@ public class PoiListFragment extends ListFragment implements OnRefreshListener,
     private float mDistance;
     private int mFirstVisiblePosition = 0;
     private boolean mIsRecreated;
-    private View mEmptyView;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -65,10 +65,8 @@ public class PoiListFragment extends ListFragment implements OnRefreshListener,
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
             Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.list_fragment, container,
+        return inflater.inflate(R.layout.list_fragment, container,
                 false);
-        mEmptyView = rootView.findViewById(android.R.id.empty);
-        return rootView;
     }
 
     @Override
@@ -79,6 +77,8 @@ public class PoiListFragment extends ListFragment implements OnRefreshListener,
 
         PullToRefreshListView listView = (PullToRefreshListView) getListView();
         listView.setOnRefreshListener(this);
+
+        getLoaderManager().initLoader(0, null, this);
 
         if (savedInstanceState == null) {
             mIsRecreated = false;
@@ -92,7 +92,6 @@ public class PoiListFragment extends ListFragment implements OnRefreshListener,
         super.onResume();
 
         mLocationManager.register(mReceiver, true);
-        runQueryOnCreation();
     }
 
     @Override
@@ -152,7 +151,6 @@ public class PoiListFragment extends ListFragment implements OnRefreshListener,
         if (!mIsRecreated) {
             mFirstVisiblePosition = 0;
             getListView().setSelection(mFirstVisiblePosition);
-            ((PullToRefreshListView) getListView()).prepareForRefresh();
         }
         runQuery(!mIsRecreated);
     }
@@ -163,19 +161,6 @@ public class PoiListFragment extends ListFragment implements OnRefreshListener,
             mFirstVisiblePosition = 0;
             requestData();
         }
-
-        Uri uri = Wheelmap.POIs.CONTENT_URI_POI_SORTED;
-        Cursor cursor = getActivity().managedQuery(
-                uri,
-                Wheelmap.POIs.PROJECTION,
-                QueriesBuilderHelper.userSettingsFilter(getActivity()
-                        .getApplicationContext()), createWhereValues(), "");
-        Cursor wrappingCursor = createCursorWrapper(cursor);
-
-        POIsListCursorAdapter adapter = new POIsListCursorAdapter(
-                getActivity(), wrappingCursor);
-
-        setListAdapter(adapter);
         Log.d(TAG, "runQuery: mFirstVisible = " + mFirstVisiblePosition);
         getListView().setSelection(mFirstVisiblePosition);
     }
@@ -208,14 +193,34 @@ public class PoiListFragment extends ListFragment implements OnRefreshListener,
     }
 
     public void updateRefreshStatus(boolean syncing) {
+        Log.d(TAG, "refreshSTatus: " + syncing);
         if (syncing) {
-            getListView().setEmptyView(null);
+            ((PullToRefreshListView) getListView()).prepareForRefresh();
         } else {
-            Animation anim = AnimationUtils.loadAnimation(getActivity(), R.anim.fade_in);
-            mEmptyView.startAnimation(anim);
-            getListView().setEmptyView(mEmptyView);
             ((PullToRefreshListView) getListView()).onRefreshComplete();
         }
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        Uri uri = Wheelmap.POIs.CONTENT_URI_POI_SORTED;
+        return new CursorLoader(getActivity(), uri, Wheelmap.POIs.PROJECTION,
+                QueriesBuilderHelper.userSettingsFilter(getActivity()
+                        .getApplicationContext()), createWhereValues(), "");
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        updateRefreshStatus(false);
+        Cursor wrappingCursor = createCursorWrapper(data);
+        POIsListCursorAdapter adapter = new POIsListCursorAdapter(
+                getActivity(), wrappingCursor);
+        setListAdapter(adapter);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        setListAdapter(null);
     }
 
 }
