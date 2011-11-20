@@ -24,6 +24,7 @@ import org.wheelmap.android.app.WheelmapApp;
 import org.wheelmap.android.manager.SupportManager;
 import org.wheelmap.android.service.SyncService;
 import org.wheelmap.android.service.SyncServiceException;
+import org.wheelmap.android.ui.mapsforge.TestFragmentActivity;
 import org.wheelmap.android.utils.DetachableResultReceiver;
 
 import android.app.Activity;
@@ -148,6 +149,8 @@ public class StartupActivity extends Activity implements
 	private void startupApp() {
 		Intent intent = new Intent(getApplicationContext(),
 				POIsListActivity.class);
+//		Intent intent  = new Intent(getApplicationContext(),
+//				TestFragmentActivity.class);
 		startActivity(intent);
 		finish();
 		overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
