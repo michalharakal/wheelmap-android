@@ -61,7 +61,6 @@ public class POIsListActivity extends Activity implements
 		if (previousState) {
 			// Start listening for SyncService updates again
 			mState.mReceiver.setReceiver(this);
-			updateRefreshStatus();
 		} else {
 			mState = new State();
 			mState.mReceiver.setReceiver(this);
@@ -131,6 +130,7 @@ public class POIsListActivity extends Activity implements
 //	}
 
 	private void updateRefreshStatus() {
+	    Log.d(TAG, "updateRefreshStatus");
 	    PoiListFragment listFragment = (PoiListFragment) getFragmentManager().findFragmentByTag(PoiListFragment.TAG);
 	    if (listFragment != null) {
 	        listFragment.updateRefreshStatus(mState.mSyncing);
@@ -200,7 +200,6 @@ public class POIsListActivity extends Activity implements
 
         public DetachableResultReceiver mReceiver;
         public boolean mSyncing = false;
-        public boolean mIsRecreated = false;
 
         private State() {
             mReceiver = new DetachableResultReceiver(new Handler());
