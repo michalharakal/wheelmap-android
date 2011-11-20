@@ -27,8 +27,6 @@ public class POIDetailFragment extends Fragment {
   private static final String TAG = "POIDetailFragment";
 
 
-  private TextView nameText = null;
-  private TextView categoryText = null;
   private TextView nodetypeText = null;
   private TextView commentText = null;
   private TextView addressText = null;
@@ -62,8 +60,6 @@ public class POIDetailFragment extends Fragment {
     mSupportManager = WheelmapApp.getSupportManager();
     System.gc();
 
-    nameText = (TextView) rootView.findViewById(R.id.title_name);
-    categoryText = (TextView) rootView.findViewById(R.id.title_category);
     nodetypeText = (TextView) rootView.findViewById(R.id.nodetype);
 
     phoneText = (TextView) rootView.findViewById(R.id.phone);
@@ -164,10 +160,10 @@ public class POIDetailFragment extends Fragment {
     // iconImage.setImageDrawable(nodeType.iconDrawable);
 
     setWheelchairState(state);
-    nameText.setText(name);
+  //  nameText.setText(name);
 
     String category = mSupportManager.lookupCategory(categoryId).localizedName;
-    categoryText.setText(category);
+    //categoryText.setText(category);
     nodetypeText.setText(nodeType.localizedName);
     commentText.setText(comment);
     addressText.setText(POIHelper.getAddress(cur));
