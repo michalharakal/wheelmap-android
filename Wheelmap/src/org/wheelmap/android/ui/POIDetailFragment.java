@@ -55,6 +55,11 @@ public class POIDetailFragment extends Fragment {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+
+    if (null != savedInstanceState) {
+      poiID = savedInstanceState.getLong(POI_ID, 0);
+    }
+
   }
 
 
@@ -119,13 +124,6 @@ public class POIDetailFragment extends Fragment {
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
 
-    long temp = 0;
-    if (null != savedInstanceState) {
-      savedInstanceState.getLong(POI_ID, 0);
-    }
-    if (poiID == 0) {
-      poiID = temp;
-    }
     if ((poiID != 0) && (null != getActivity())) {
       load();
     }
