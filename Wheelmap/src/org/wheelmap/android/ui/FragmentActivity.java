@@ -2,6 +2,7 @@ package org.wheelmap.android.ui;
 
 import org.wheelmap.android.R;
 import org.wheelmap.android.ui.PoiListFragment.PoiSelectedListener;
+
 import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;

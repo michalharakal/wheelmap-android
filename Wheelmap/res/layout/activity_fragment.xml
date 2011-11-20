@@ -16,17 +16,17 @@
 		android:layout_height="match_parent" />
 
 
-	<LinearLayout android:id="@+id/content"
+	<RelativeLayout android:id="@+id/content"
 		android:orientation="vertical" android:layout_weight="2"
 		android:layout_width="0dp" android:layout_height="match_parent">
 
 		<LinearLayout android:id="@+id/detail"
-			android:orientation="horizontal" android:layout_weight="1"
-			android:layout_width="match_parent" android:layout_height="0dp" />
+        android:orientation="horizontal"
+			android:layout_width="match_parent" android:layout_height="wrap_content" />
 
 		<fragment android:name="org.wheelmap.android.ui.mapsforge.MapsforgeFragment"
 			android:id="@+id/mapsforge_fragment" android:layout_width="match_parent"
-			android:layout_height="0dp" android:layout_weight="1.2" />
-	</LinearLayout>
+			android:layout_height="match_parent" android:layout_below="@id/detail" />
+	</RelativeLayout>
 
 </LinearLayout>
