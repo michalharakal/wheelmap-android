@@ -32,7 +32,6 @@ import android.util.Log;
  * Application class for Wheelmap on Android
  * This class initializes the ARCA framework (for crash reporting), the SupportManager
  * (used for category and nodetype lookup), and the LocationManager.
- * 
  * It allows access to the central SupportManager.
  * @author Michal Harakal, Michael Kroez
  *
