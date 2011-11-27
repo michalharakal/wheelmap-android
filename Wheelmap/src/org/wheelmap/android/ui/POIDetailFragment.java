@@ -12,10 +12,10 @@ import org.wheelmap.android.model.POIHelper;
 import org.wheelmap.android.model.Wheelmap;
 
 import wheelmap.org.WheelchairState;
-import android.app.Fragment;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,175 +24,172 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-
 public class POIDetailFragment extends Fragment {
-  private static final String POI_ID = "poiId";
 
+    private static final String POI_ID = "poiId";
 
-  private static final String TAG = "POIDetailFragment";
+    private static final String TAG = "POIDetailFragment";
 
+    private TextView nodetypeText = null;
+    private TextView commentText = null;
+    private TextView addressText = null;
+    private TextView websiteText = null;
+    private TextView phoneText = null;
+    private ImageView mStateIcon = null;
+    private TextView mWheelchairStateText = null;
+    private RelativeLayout mWheelchairStateLayout = null;
+    private HashMap<WheelchairState, Integer> mWheelchairStateTextColorMap = new HashMap<WheelchairState, Integer>();
+    private HashMap<WheelchairState, Integer> mWheelchairStateTextsMap = new HashMap<WheelchairState, Integer>();
 
-  private TextView nodetypeText = null;
-  private TextView commentText = null;
-  private TextView addressText = null;
-  private TextView websiteText = null;
-  private TextView phoneText = null;
-  private ImageView mStateIcon = null;
-  private TextView mWheelchairStateText = null;
-  private RelativeLayout mWheelchairStateLayout = null;
-  private HashMap<WheelchairState, Integer> mWheelchairStateTextColorMap = new HashMap<WheelchairState, Integer>();
-  private HashMap<WheelchairState, Integer> mWheelchairStateTextsMap = new HashMap<WheelchairState, Integer>();
+    private MapController mapController;
+    private MapView mapView;
 
-  private MapController mapController;
-  private MapView mapView;
+    private WheelchairState mWheelChairState;
+    private SupportManager mSupportManager;
+    private ViewGroup mContentView;
 
-  private WheelchairState mWheelChairState;
-  private SupportManager mSupportManager;
-  private ViewGroup mContentView;
+    private long poiID;
 
-  private long poiID;
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-  @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
+        if (null != savedInstanceState) {
+            poiID = savedInstanceState.getLong(POI_ID, 0);
+        }
 
-    if (null != savedInstanceState) {
-      poiID = savedInstanceState.getLong(POI_ID, 0);
     }
 
-  }
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+            Bundle savedInstanceState) {
+        View rootView = (View) inflater.inflate(R.layout.activity_detail,
+                container, false);
+        mSupportManager = WheelmapApp.getSupportManager();
+        System.gc();
 
+        nodetypeText = (TextView) rootView.findViewById(R.id.nodetype);
 
-  @Override
-  public View onCreateView(LayoutInflater inflater, ViewGroup container,
-    Bundle savedInstanceState) {
-    View rootView = (View) inflater.inflate(R.layout.activity_detail, container, false);
-    mSupportManager = WheelmapApp.getSupportManager();
-    System.gc();
+        phoneText = (TextView) rootView.findViewById(R.id.phone);
+        addressText = (TextView) rootView.findViewById(R.id.addr);
+        commentText = (TextView) rootView.findViewById(R.id.comment);
+        websiteText = (TextView) rootView.findViewById(R.id.website);
+        mStateIcon = (ImageView) rootView
+                .findViewById(R.id.wheelchair_state_icon);
+        mWheelchairStateText = (TextView) rootView
+                .findViewById(R.id.wheelchair_state_text);
+        mWheelchairStateLayout = (RelativeLayout) rootView
+                .findViewById(R.id.wheelchair_state_layout);
 
-    nodetypeText = (TextView) rootView.findViewById(R.id.nodetype);
+        mWheelchairStateTextColorMap.put(WheelchairState.YES, new Integer(
+                R.color.wheel_enabled));
+        mWheelchairStateTextColorMap.put(WheelchairState.NO, new Integer(
+                R.color.wheel_disabled));
+        mWheelchairStateTextColorMap.put(WheelchairState.LIMITED, new Integer(
+                R.color.wheel_limited));
+        mWheelchairStateTextColorMap.put(WheelchairState.UNKNOWN, new Integer(
+                R.color.wheel_unknown));
 
-    phoneText = (TextView) rootView.findViewById(R.id.phone);
-    addressText = (TextView) rootView.findViewById(R.id.addr);
-    commentText = (TextView) rootView.findViewById(R.id.comment);
-    websiteText = (TextView) rootView.findViewById(R.id.website);
-    mStateIcon = (ImageView) rootView.findViewById(R.id.wheelchair_state_icon);
-    mWheelchairStateText = (TextView) rootView.findViewById(R.id.wheelchair_state_text);
-    mWheelchairStateLayout = (RelativeLayout) rootView.findViewById(R.id.wheelchair_state_layout);
+        mWheelchairStateTextsMap.put(WheelchairState.YES, new Integer(
+                R.string.ws_enabled_title));
+        mWheelchairStateTextsMap.put(WheelchairState.NO, new Integer(
+                R.string.ws_disabled_title));
+        mWheelchairStateTextsMap.put(WheelchairState.LIMITED, new Integer(
+                R.string.ws_limited_title));
+        mWheelchairStateTextsMap.put(WheelchairState.UNKNOWN, new Integer(
+                R.string.ws_unknown_title));
 
-    mWheelchairStateTextColorMap.put(WheelchairState.YES, new Integer(
-        R.color.wheel_enabled));
-    mWheelchairStateTextColorMap.put(WheelchairState.NO, new Integer(
-        R.color.wheel_disabled));
-    mWheelchairStateTextColorMap.put(WheelchairState.LIMITED, new Integer(
-        R.color.wheel_limited));
-    mWheelchairStateTextColorMap.put(WheelchairState.UNKNOWN, new Integer(
-        R.color.wheel_unknown));
+        /*
+         * mWheelchairStateLayout.setOnClickListener(new OnClickListener() {
+         * public void onClick(View v) { //onEditWheelchairState(v); } });
+         */
 
-    mWheelchairStateTextsMap.put(WheelchairState.YES, new Integer(
-        R.string.ws_enabled_title));
-    mWheelchairStateTextsMap.put(WheelchairState.NO, new Integer(
-        R.string.ws_disabled_title));
-    mWheelchairStateTextsMap.put(WheelchairState.LIMITED, new Integer(
-        R.string.ws_limited_title));
-    mWheelchairStateTextsMap.put(WheelchairState.UNKNOWN, new Integer(
-        R.string.ws_unknown_title));
+        // mapView = (MapView) rootView findViewById(R.id.map);
 
-    /*
-    mWheelchairStateLayout.setOnClickListener(new OnClickListener() {
-            public void onClick(View v) {
-                    //onEditWheelchairState(v);
-            }
-    });
-     */
+        // mapView.setClickable(true);
+        // mapView.setBuiltInZoomControls(true);
+        // ConfigureMapView.pickAppropriateMap(this, mapView);
+        // mapController = mapView.getController();
+        // mapController.setZoom(18);
 
-    //mapView = (MapView) rootView findViewById(R.id.map);
-
-    //mapView.setClickable(true);
-    //mapView.setBuiltInZoomControls(true);
-    //ConfigureMapView.pickAppropriateMap(this, mapView);
-    //mapController = mapView.getController();
-    //mapController.setZoom(18);
-
-
-    return rootView;
-  }
-
-  @Override
-  public void onActivityCreated(Bundle savedInstanceState) {
-    super.onActivityCreated(savedInstanceState);
-
-    if ((poiID != 0) && (null != getActivity())) {
-      load();
-    }
-  }
-
-  private void setWheelchairState(WheelchairState newState) {
-    mWheelChairState = newState;
-    mStateIcon.setImageDrawable(mSupportManager.lookupWheelDrawable(newState.getId()));
-    mWheelchairStateText.setTextColor(getResources().getColor(
-        mWheelchairStateTextColorMap.get(newState)));
-    mWheelchairStateText.setText(mWheelchairStateTextsMap.get(newState));
-  }
-
-  public void upDatePOI(Long newpoiID) {
-    poiID = newpoiID;
-    Log.d(TAG, "onCreate: poiID = " + newpoiID);
-    if (null != getActivity()) {
-      load();
-    }
-  }
-
-  @Override
-  public void onSaveInstanceState(Bundle outState) {
-    outState.putLong(POI_ID, poiID);
-    super.onSaveInstanceState(outState);
-  }
-
-  private void load() {
-    // Use the ContentUris method to produce the base URI for the contact
-    // with _ID == 23.
-    Uri poiUri = Uri.withAppendedPath(Wheelmap.POIs.CONTENT_URI_POI_ID,
-      String.valueOf(poiID));
-
-    // Then query for this specific record:
-    Cursor cur = getActivity().managedQuery(poiUri, null, null, null, null);
-
-    if (cur.getCount() < 1) {
-      cur.close();
-      return;
+        return rootView;
     }
 
-    cur.moveToFirst();
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
 
-    WheelchairState state = POIHelper.getWheelchair(cur);
-    String name = POIHelper.getName(cur);
-    String comment = POIHelper.getComment(cur);
-    int lat = (int) (POIHelper.getLatitude(cur) * 1E6);
-    int lon = (int) (POIHelper.getLongitude(cur) * 1E6);
-    int nodeTypeId = POIHelper.getNodeTypeId(cur);
-    int categoryId = POIHelper.getCategoryId(cur);
+        if ((poiID != 0) && (null != getActivity())) {
+            load();
+        }
+    }
 
-    NodeType nodeType = mSupportManager.lookupNodeType(nodeTypeId);
-    // iconImage.setImageDrawable(nodeType.iconDrawable);
+    private void setWheelchairState(WheelchairState newState) {
+        mWheelChairState = newState;
+        mStateIcon.setImageDrawable(mSupportManager
+                .lookupWheelDrawable(newState.getId()));
+        mWheelchairStateText.setTextColor(getResources().getColor(
+                mWheelchairStateTextColorMap.get(newState)));
+        mWheelchairStateText.setText(mWheelchairStateTextsMap.get(newState));
+    }
 
-    setWheelchairState(state);
-  //  nameText.setText(name);
+    public void upDatePOI(Long newpoiID) {
+        poiID = newpoiID;
+        Log.d(TAG, "onCreate: poiID = " + newpoiID);
+        if (null != getActivity()) {
+            load();
+        }
+    }
 
-    String category = mSupportManager.lookupCategory(categoryId).localizedName;
-    //categoryText.setText(category);
-    nodetypeText.setText(nodeType.localizedName);
-    commentText.setText(comment);
-    addressText.setText(POIHelper.getAddress(cur));
-    websiteText.setText(POIHelper.getWebsite(cur));
-    phoneText.setText(POIHelper.getPhone(cur));
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putLong(POI_ID, poiID);
+        super.onSaveInstanceState(outState);
+    }
 
-    /*
-    POIMapsforgeOverlay overlay = new POIMapsforgeOverlay();
-    overlay.setItem(name, comment, nodeType, state, lat, lon);
-    mapView.getOverlays().clear();
-    mapView.getOverlays().add(overlay);
-    mapController.setCenter(new GeoPoint(lat, lon));
-     */
-  }
+    private void load() {
+        // Use the ContentUris method to produce the base URI for the contact
+        // with _ID == 23.
+        Uri poiUri = Uri.withAppendedPath(Wheelmap.POIs.CONTENT_URI_POI_ID,
+                String.valueOf(poiID));
+
+        // Then query for this specific record:
+        Cursor cur = getActivity().managedQuery(poiUri, null, null, null, null);
+
+        if (cur.getCount() < 1) {
+            cur.close();
+            return;
+        }
+
+        cur.moveToFirst();
+
+        WheelchairState state = POIHelper.getWheelchair(cur);
+        String name = POIHelper.getName(cur);
+        String comment = POIHelper.getComment(cur);
+        int lat = (int) (POIHelper.getLatitude(cur) * 1E6);
+        int lon = (int) (POIHelper.getLongitude(cur) * 1E6);
+        int nodeTypeId = POIHelper.getNodeTypeId(cur);
+        int categoryId = POIHelper.getCategoryId(cur);
+
+        NodeType nodeType = mSupportManager.lookupNodeType(nodeTypeId);
+        // iconImage.setImageDrawable(nodeType.iconDrawable);
+
+        setWheelchairState(state);
+        // nameText.setText(name);
+
+        String category = mSupportManager.lookupCategory(categoryId).localizedName;
+        // categoryText.setText(category);
+        nodetypeText.setText(nodeType.localizedName);
+        commentText.setText(comment);
+        addressText.setText(POIHelper.getAddress(cur));
+        websiteText.setText(POIHelper.getWebsite(cur));
+        phoneText.setText(POIHelper.getPhone(cur));
+
+        /*
+         * POIMapsforgeOverlay overlay = new POIMapsforgeOverlay();
+         * overlay.setItem(name, comment, nodeType, state, lat, lon);
+         * mapView.getOverlays().clear(); mapView.getOverlays().add(overlay);
+         * mapController.setCenter(new GeoPoint(lat, lon));
+         */
+    }
 }

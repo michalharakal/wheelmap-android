@@ -12,17 +12,19 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS-IS" BASIS
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-limitations under the License.
-        
+limitations under the License.
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="org.wheelmap.android"
-      android:versionCode="10"
-      android:versionName="0.7"
-      android:installLocation="auto">
-    <uses-sdk android:minSdkVersion="12" />
-    
+    android:installLocation="auto"
+    package="org.wheelmap.android"
+    android:versionCode="10"
+    android:versionName="0.7" >
+
+    <uses-sdk
+        android:minSdkVersion="8"
+        android:targetSdkVersion="12" />
+
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -36,21 +38,19 @@ limitations under the License.
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:name=".app.WheelmapApp"
-        android:theme="@android:style/Theme.Holo.Light" >
+        android:theme="@style/Theme.Sherlock.Light" >
         <activity
             android:label="@string/app_name"
             android:name="org.wheelmap.android.ui.StartupActivity" >
             <intent-filter >
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
-            android:name="org.wheelmap.android.ui.POIsListActivity"
-            android:label="@string/app_name"/>
-        <activity
-            android:name="org.wheelmap.android.ui.FragmentActivity"
-            android:label="@string/app_name"/>
+            android:label="@string/app_name"
+            android:name="org.wheelmap.android.ui.TabletActivity" />
         <activity
             android:label="@string/title_pois_map"
             android:launchMode="singleTask"
@@ -60,63 +60,69 @@ limitations under the License.
             android:name=".ui.POIDetailActivity" >
             <intent-filter >
                 <action android:name="android.intent.action.SEND" />
+
                 <category android:name="android.intent.category.DEFAULT" />
+
                 <data android:mimeType="image/*" />
             </intent-filter>
         </activity>
         <activity
-            android:name=".ui.POIDetailActivityEditable"
-            android:label="@string/title_pois_map" />
+            android:label="@string/title_pois_map"
+            android:name=".ui.POIDetailActivityEditable" />
         <activity
-            android:name=".ui.NewSettingsActivity"
-            android:label="@string/title_pois_settings" />   
-        <activity 
-        	android:name=".ui.WheelchairStateActivity"
-        	android:label="@string/title_wheelchair_state"
-        />
+            android:label="@string/title_pois_settings"
+            android:name=".ui.NewSettingsActivity" />
         <activity
-        	android:name=".ui.InfoActivity"
-        	android:label="@string/title_info"
-        />
+            android:label="@string/title_wheelchair_state"
+            android:name=".ui.WheelchairStateActivity" />
         <activity
-        	android:name=".ui.LegalNoticeActivity"
-        	android:label="@string/title_legal_notice"
-        />
-        
-        <activity android:name=".ui.mapsforge.TestFragmentActivity"
-      		android:label="@string/title_pois_map"
-      	/>
-        
+            android:label="@string/title_info"
+            android:name=".ui.InfoActivity" />
         <activity
-            android:name="org.wheelmap.android.ui.POIDetailActivity"
-            android:label="@string/title_pois_detail">
-            
-             <!-- This filter says that we can view or edit the data of
-                 a single note -->
-            <intent-filter android:label="@string/edit_poi">
+            android:label="@string/title_legal_notice"
+            android:name=".ui.LegalNoticeActivity" />
+        <activity
+            android:label="@string/title_pois_map"
+            android:name=".ui.mapsforge.TestFragmentActivity" />
+        <activity
+            android:label="@string/title_pois_detail"
+            android:name="org.wheelmap.android.ui.POIDetailActivity" >
+
+            <!--
+                  This filter says that we can view or edit the data of
+                 a single note
+            -->
+            <intent-filter android:label="@string/edit_poi" >
                 <action android:name="android.intent.action.VIEW" />
                 <action android:name="android.intent.action.EDIT" />
-                <action android:name="android.intent.action.INSERT" />                                               
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="vnd.android.cursor.item/vnd.wheelmap.pois" />                
-            </intent-filter>
-            
-            <!-- This filter says that we can create a new note inside
-                 of a directory of notes. -->
-            <intent-filter>
                 <action android:name="android.intent.action.INSERT" />
+
                 <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="vnd.android.cursor.item/vnd.wheelmap.pois" />
+            </intent-filter>
+
+            <!--
+                 This filter says that we can create a new note inside
+                 of a directory of notes.
+            -->
+            <intent-filter >
+                <action android:name="android.intent.action.INSERT" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
                 <data android:mimeType="vnd.android.cursor.dir/vnd.wheelmap.pois" />
             </intent-filter>
-            </activity>
-            
-        <service android:name=".service.SyncService" />    
-            
-        <provider android:name="org.wheelmap.android.model.POIsProvider"
-          android:authorities="org.wheelmap.android"/>   
-        
-        <provider android:name="org.wheelmap.android.model.SupportProvider"
-          android:authorities="org.wheelmap.android.support"/>
+        </activity>
 
+        <service android:name=".service.SyncService" />
+
+        <provider
+            android:authorities="org.wheelmap.android"
+            android:name="org.wheelmap.android.model.POIsProvider" />
+        <provider
+            android:authorities="org.wheelmap.android.support"
+            android:name="org.wheelmap.android.model.SupportProvider" />
     </application>
+
 </manifest>
