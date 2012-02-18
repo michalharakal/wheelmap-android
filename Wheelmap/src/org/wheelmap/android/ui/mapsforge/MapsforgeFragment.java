@@ -8,6 +8,7 @@ import org.mapsforge.android.maps.MapContext;
 import org.mapsforge.android.maps.MapController;
 import org.mapsforge.android.maps.MapView;
 import org.mapsforge.android.maps.MapView.OnZoomListener;
+import org.wheelmap.android.R;
 import org.wheelmap.android.manager.MyLocationManager;
 import org.wheelmap.android.model.QueriesBuilderHelper;
 import org.wheelmap.android.model.Wheelmap;
@@ -27,269 +28,298 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewGroup.LayoutParams;
 import android.widget.LinearLayout;
 
 public class MapsforgeFragment extends Fragment implements
-        DetachableResultReceiver.Receiver, MapViewTouchMove, OnZoomListener {
+		DetachableResultReceiver.Receiver, MapViewTouchMove, OnZoomListener {
 
-    private final static String TAG = "mapsforge";
+	private final static String TAG = "mapsforge";
 
-    private State mState;
+	private State mState;
 
-    private MapFragmentContext mMapFragmentContext;
-    private MapController mMapController;
-    private MyMapView mMapView;
-    private POIsCursorMapsforgeOverlay mPoisItemizedOverlay;
-    private MyLocationOverlay mCurrLocationOverlay;
-    private MyLocationManager mLocationManager;
-    private GeoPoint mLastGeoPointE6;
+	private MapFragmentContext mMapFragmentContext;
+	private MapController mMapController;
+	private MyMapView mMapView;
+	private POIsCursorMapsforgeOverlay mPoisItemizedOverlay;
+	private MyLocationOverlay mCurrLocationOverlay;
+	private MyLocationManager mLocationManager;
+	private GeoPoint mLastGeoPointE6;
 
-    private boolean isCentered;
+	private boolean isCentered;
 
-    // Begin startup lifecylce
+	private Bundle savedInstanceState;
 
-    /*
-     * (non-Javadoc)
-     * @see android.support.v4.app.Fragment#onAttach(android.support.v4.app.
-     * SupportActivity)
-     */
-    @Override
-    public void onAttach(SupportActivity activity) {
-        super.onAttach(activity);
-        mState = new State();
-        mState.mReceiver.setReceiver(this);
-    }
+	// some constants for saving the map state for later restore
+	private static final String KEY_LATITUDE_E6 = "MapFragment:LatitudeE6";
+	private static final String KEY_LONGITUDE_E6 = "MapFragment:LongitudeE6";
+	private static final String KEY_ZOOM_LEVEL = "MapFragment:ZoomLevel";
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+	// Begin startup lifecylce
 
-        mMapFragmentContext = getMapContext();
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see android.support.v4.app.Fragment#onAttach(android.support.v4.app.
+	 * SupportActivity)
+	 */
+	@Override
+	public void onAttach(SupportActivity activity) {
+		super.onAttach(activity);
+		mState = new State();
+		mState.mReceiver.setReceiver(this);
+	}
 
-        mMapView = new MyMapView(mMapFragmentContext);
-        mMapView.setClickable(true);
-        mMapView.setBuiltInZoomControls(true);
-        mMapView.setScaleBar(true);
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
 
-        ConfigureMapView.pickAppropriateMap(getActivity(), mMapView);
+	}
 
-        mMapController = mMapView.getController();
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container,
+			Bundle savedInstanceState) {
+		this.savedInstanceState = savedInstanceState;
+		return inflater.inflate(R.layout.fragment_map, container, false);
+	}
 
-        // overlays
-        mPoisItemizedOverlay = new POIsCursorMapsforgeOverlay(getActivity());
-        runQuery();
+	@Override
+	public void onActivityCreated(Bundle savedInstanceState) {
+		super.onActivityCreated(savedInstanceState);
 
-        mMapView.getOverlays().add(mPoisItemizedOverlay);
+	}
 
-        mCurrLocationOverlay = new MyLocationOverlay();
-        mMapView.getOverlays().add(mCurrLocationOverlay);
-        mMapView.registerListener(this);
-        mMapView.registerZoomListener(this);
-        mMapController.setZoom(18); // Zoom 1 is world view
+	@Override
+	public void onStart() {
+		super.onStart();
+		mMapFragmentContext = getMapContext();
 
-        isCentered = false;
+		mMapView = new MyMapView(mMapFragmentContext);
+		mMapView.setClickable(true);
+		mMapView.setBuiltInZoomControls(true);
+		mMapView.setScaleBar(true);
 
-        mLocationManager = MyLocationManager.get(mState.mReceiver, true);
+		ConfigureMapView.pickAppropriateMap(getActivity(), mMapView);
 
-    }
+		mMapController = mMapView.getController();
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-            Bundle savedInstanceState) {
-        LinearLayout.LayoutParams llParams = new LinearLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-        LinearLayout ll = new LinearLayout(getActivity());
-        ll.addView(mMapView, llParams);
-        return ll;
-    }
+		// overlays
+		mPoisItemizedOverlay = new POIsCursorMapsforgeOverlay(getActivity());
+		runQuery();
+		mCurrLocationOverlay = new MyLocationOverlay();
 
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-    }
+		mMapView.getOverlays().add(mPoisItemizedOverlay);
 
-    @Override
-    public void onStart() {
-        super.onStart();
-    }
+		mMapView.getOverlays().add(mCurrLocationOverlay);
+		mMapView.registerListener(this);
+		mMapView.registerZoomListener(this);
+		mMapController.setZoom(18); // Zoom 1 is world view
+		isCentered = false;
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        mMapFragmentContext.onResume();
-    }
+		mLocationManager = MyLocationManager.get(mState.mReceiver, true);
+		LinearLayout ll = (LinearLayout) getActivity().findViewById(
+				R.id.fragment_map_innerview);
+		ll.removeAllViews();
+		ll.addView(mMapView);
 
-    // end startup lifecycle
+		if (savedInstanceState != null) {
+			final int latitude = savedInstanceState.getInt(KEY_LATITUDE_E6,
+					Integer.MIN_VALUE);
+			final int longitude = savedInstanceState.getInt(KEY_LONGITUDE_E6,
+					Integer.MIN_VALUE);
+			final byte zoom = savedInstanceState.getByte(KEY_ZOOM_LEVEL,
+					Byte.MIN_VALUE);
 
-    // begin stop lifecycle
+			// TODO RESTORE MAP VALUE
+		}
+	}
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        mMapFragmentContext.onPause();
-    }
+	@Override
+	public void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
 
-    @Override
-    public void onStop() {
-        super.onStop();
-    }
+		MapView mapView = (MapView) getView();
+		GeoPoint center = mapView.getMapCenter();
+		outState.putInt(KEY_LATITUDE_E6, center.getLatitudeE6());
+		outState.putInt(KEY_LONGITUDE_E6, center.getLongitudeE6());
+		outState.putByte(KEY_ZOOM_LEVEL, mapView.getZoomLevel());
+	}
 
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-    }
+	@Override
+	public void onResume() {
+		super.onResume();
+		mMapFragmentContext.onResume();
+	}
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        mMapFragmentContext.destroyMapViews();
-    }
+	// end startup lifecycle
 
-    @Override
-    public void onDetach() {
-        super.onDetach();
-    }
+	// begin stop lifecycle
 
-    // end startup cycle
+	@Override
+	public void onPause() {
+		super.onPause();
+		mMapFragmentContext.onPause();
+	}
 
-    public void setCenter(GeoPoint location) {
-        mMapController.setCenter(location);
-        isCentered = true;
-    }
+	@Override
+	public void onStop() {
+		super.onStop();
+	}
 
-    public void repopulateOverlay() {
-        runQuery();
-    }
+	@Override
+	public void onDestroyView() {
+		super.onDestroyView();
+	}
 
-    public MapFragmentContext getMapContext() {
-        return new MapFragmentContext(getActivity().getApplicationContext());
-    }
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+		mMapFragmentContext.destroyMapViews();
+	}
 
-    private class MapFragmentContext extends ContextWrapper implements
-            MapContext {
+	@Override
+	public void onDetach() {
+		super.onDetach();
+	}
 
-        /**
-         * Counter to store the last ID given to a MapView.
-         */
-        private int lastMapViewId;
-        private List<MapView> mapViews = new ArrayList<MapView>(2);
+	// end startup cycle
 
-        public MapFragmentContext(Context context) {
-            super(context);
-        }
+	public void setCenter(GeoPoint location) {
+		mMapController.setCenter(location);
+		isCentered = true;
+	}
 
-        @Override
-        public int getMapViewId() {
-            return ++this.lastMapViewId;
-        }
+	public void repopulateOverlay() {
+		runQuery();
+	}
 
-        @Override
-        public void registerMapView(MapView mapView) {
-            if (this.mapViews != null) {
-                this.mapViews.add(mapView);
-            }
-        }
+	public MapFragmentContext getMapContext() {
+		return new MapFragmentContext(getActivity().getApplicationContext());
+	}
 
-        @Override
-        public void unregisterMapView(MapView mapView) {
-            if (this.mapViews != null) {
-                this.mapViews.remove(mapView);
-            }
-        }
+	private class MapFragmentContext extends ContextWrapper implements
+			MapContext {
 
-        private void destroyMapViews() {
-            if (this.mapViews != null) {
-                MapView currentMapView;
-                while (!this.mapViews.isEmpty()) {
-                    currentMapView = this.mapViews.get(0);
-                    currentMapView.destroy();
-                }
-                currentMapView = null;
-                this.mapViews.clear();
-                this.mapViews = null;
-            }
-        }
+		/**
+		 * Counter to store the last ID given to a MapView.
+		 */
+		private int lastMapViewId;
+		private List<MapView> mapViews = new ArrayList<MapView>(2);
 
-        private void onResume() {
-            for (int i = 0, n = this.mapViews.size(); i < n; ++i) {
-                this.mapViews.get(i).onResume();
-            }
-        }
+		public MapFragmentContext(Context context) {
+			super(context);
+		}
 
-        private void onPause() {
-            for (int i = 0, n = this.mapViews.size(); i < n; ++i) {
-                MapView currentMapView = this.mapViews.get(i);
-                currentMapView.onPause();
-            }
-        }
-    }
+		@Override
+		public int getMapViewId() {
+			return ++this.lastMapViewId;
+		}
 
-    @Override
-    public void onZoom(byte zoomLevel) {
+		@Override
+		public void registerMapView(MapView mapView) {
+			if (this.mapViews != null) {
+				this.mapViews.add(mapView);
+			}
+		}
 
-    }
+		@Override
+		public void unregisterMapView(MapView mapView) {
+			if (this.mapViews != null) {
+				this.mapViews.remove(mapView);
+			}
+		}
 
-    @Override
-    public void onMapViewTouchMoveEnough() {
+		private void destroyMapViews() {
+			if (this.mapViews != null) {
+				MapView currentMapView;
+				while (!this.mapViews.isEmpty()) {
+					currentMapView = this.mapViews.get(0);
+					currentMapView.destroy();
+				}
+				currentMapView = null;
+				this.mapViews.clear();
+				this.mapViews = null;
+			}
+		}
 
-    }
+		private void onResume() {
+			for (int i = 0, n = this.mapViews.size(); i < n; ++i) {
+				this.mapViews.get(i).onResume();
+			}
+		}
 
-    private void runQuery() {
-        // Run query
-        Uri uri = Wheelmap.POIs.CONTENT_URI;
-        Cursor cursor = getActivity().getContentResolver().query(
-                uri,
-                Wheelmap.POIs.PROJECTION,
-                QueriesBuilderHelper.userSettingsFilter(getActivity()
-                        .getApplicationContext()), null,
-                Wheelmap.POIs.DEFAULT_SORT_ORDER);
+		private void onPause() {
+			for (int i = 0, n = this.mapViews.size(); i < n; ++i) {
+				MapView currentMapView = this.mapViews.get(i);
+				currentMapView.onPause();
+			}
+		}
+	}
 
-        mPoisItemizedOverlay.setCursor(cursor);
-    }
+	@Override
+	public void onZoom(byte zoomLevel) {
 
-    /** {@inheritDoc} */
-    public void onReceiveResult(int resultCode, Bundle resultData) {
-        Log.d(TAG, "onReceiveResult in mapsforge fragment resultCode = "
-                + resultCode);
-        switch (resultCode) {
-        case MyLocationManager.WHAT_LOCATION_MANAGER_UPDATE: {
-            Location location = (Location) resultData
-                    .getParcelable(MyLocationManager.EXTRA_LOCATION_MANAGER_LOCATION);
-            GeoPoint geoPoint = calcGeoPoint(location);
-            if (!isCentered) {
-                mMapController.setCenter(geoPoint);
-                isCentered = true;
-            }
+	}
 
-            // we got the first time current position so center map on it
-            if (mLastGeoPointE6 == null && !isCentered) {
-                // findViewById(R.id.btn_title_gps).setVisibility(View.VISIBLE);
-                mMapController.setCenter(geoPoint);
-            }
-            mLastGeoPointE6 = geoPoint;
-            mCurrLocationOverlay.setLocation(mLastGeoPointE6,
-                    location.getAccuracy());
-            break;
-        }
+	@Override
+	public void onMapViewTouchMoveEnough() {
 
-        }
-    }
+	}
 
-    private GeoPoint calcGeoPoint(Location location) {
-        int lat = (int) (location.getLatitude() * 1E6);
-        int lng = (int) (location.getLongitude() * 1E6);
-        return new GeoPoint(lat, lng);
-    }
+	private void runQuery() {
+		// Run query
+		Uri uri = Wheelmap.POIs.CONTENT_URI;
+		Cursor cursor = getActivity().getContentResolver().query(
+				uri,
+				Wheelmap.POIs.PROJECTION,
+				QueriesBuilderHelper.userSettingsFilter(getActivity()
+						.getApplicationContext()), null,
+				Wheelmap.POIs.DEFAULT_SORT_ORDER);
 
-    private static class State {
+		mPoisItemizedOverlay.setCursor(cursor);
+	}
 
-        public DetachableResultReceiver mReceiver;
-        public boolean mSyncing = false;
+	/** {@inheritDoc} */
+	public void onReceiveResult(int resultCode, Bundle resultData) {
+		Log.d(TAG, "onReceiveResult in mapsforge fragment resultCode = "
+				+ resultCode);
+		switch (resultCode) {
+		case MyLocationManager.WHAT_LOCATION_MANAGER_UPDATE: {
+			Location location = (Location) resultData
+					.getParcelable(MyLocationManager.EXTRA_LOCATION_MANAGER_LOCATION);
+			GeoPoint geoPoint = calcGeoPoint(location);
+			if (!isCentered) {
+				mMapController.setCenter(geoPoint);
+				isCentered = true;
+			}
 
-        private State() {
-            mReceiver = new DetachableResultReceiver(new Handler());
-        }
-    }
+			// we got the first time current position so center map on it
+			if (mLastGeoPointE6 == null && !isCentered) {
+				// findViewById(R.id.btn_title_gps).setVisibility(View.VISIBLE);
+				mMapController.setCenter(geoPoint);
+			}
+			mLastGeoPointE6 = geoPoint;
+			mCurrLocationOverlay.setLocation(mLastGeoPointE6,
+					location.getAccuracy());
+			break;
+		}
+
+		}
+	}
+
+	private GeoPoint calcGeoPoint(Location location) {
+		int lat = (int) (location.getLatitude() * 1E6);
+		int lng = (int) (location.getLongitude() * 1E6);
+		return new GeoPoint(lat, lng);
+	}
+
+	private static class State {
+
+		public DetachableResultReceiver mReceiver;
+		public boolean mSyncing = false;
+
+		private State() {
+			mReceiver = new DetachableResultReceiver(new Handler());
+		}
+	}
 
 }

@@ -109,4 +109,6 @@ limitations under the License.
     <string name="ws_limited_title">Partly wheelchair accessible</string>
     <string name="ws_disabled_title">Not wheelchair accessible</string>
     <string name="ws_enabled_title">Wheelchair accessible</string>
+    <string name="menu_filter">Filter</string>
+    <string name="menu_search">Search</string>
 </resources>
