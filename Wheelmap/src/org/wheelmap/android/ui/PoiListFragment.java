@@ -112,7 +112,7 @@ public class PoiListFragment extends ListFragment implements OnRefreshListener,
     @Override
     public void onResume() {
         super.onResume();
-
+        runQueryOnCreation();
         mLocationManager.register(mReceiver, true);
     }
 
