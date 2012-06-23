@@ -20,7 +20,7 @@ package org.wheelmap.android.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.wheelmap.android.R;
+import org.wheelmap.android.online.R;
 
 import wheelmap.org.WheelchairState;
 import android.content.Context;
@@ -90,7 +90,7 @@ public class WheelchairStateAdapter extends BaseAdapter {
 		mItems.add(stateItem);
 		stateItem = new WheelchairStateItem(
 				WheelchairState.UNKNOWN,
-				mContext.getString(R.string.settings_wheelchair_unknown_accesible),
+				mContext.getString(R.string.settings_wheelchair_unknown_accessible),
 				mContext.getResources().getDrawable(
 						R.drawable.wheelchair_state_unknown),
 				QueriesBuilderHelper.PREF_KEY_WHEELCHAIR_STATE_UNKNOWN,

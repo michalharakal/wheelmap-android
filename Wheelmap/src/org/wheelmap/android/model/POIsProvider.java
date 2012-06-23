@@ -59,7 +59,7 @@ public class POIsProvider extends ContentProvider {
 	private static final String TAG = "POIsProvider";
 
 	private static final String DATABASE_NAME = "wheelmap.db";
-	private static final int DATABASE_VERSION = 9;
+	private static final int DATABASE_VERSION = 11;
 	private static final String POIS_TABLE_NAME = "pois";
 
 	private static class DistanceQueryBuilder {
@@ -115,7 +115,7 @@ public class POIsProvider extends ContentProvider {
 		public void onCreate(SQLiteDatabase db) {
 			db.execSQL("CREATE TABLE " + POIS_TABLE_NAME + " (" + POIs._ID
 					+ " INTEGER PRIMARY KEY AUTOINCREMENT," + POIs.WM_ID
-					+ " INTEGER, " + POIs.NAME + " TEXT," + POIs.COORD_LAT
+					+ " VARCHAR(20), " + POIs.NAME + " TEXT," + POIs.COORD_LAT
 					+ " VARCHAR(15)," + POIs.COORD_LON + " VARCHAR(15),"
 					+ POIs.COS_LAT_RAD + " NUMERIC," + POIs.SIN_LAT_RAD
 					+ " NUMERIC," + POIs.COS_LON_RAD + " NUMERIC,"
@@ -184,7 +184,7 @@ public class POIsProvider extends ContentProvider {
 		case POIS:
 			return POIs.CONTENT_TYPE;
 		case POI_ID:
-			return POIs.CONTENT_TYPE_POI_ID;
+			return POIs.CONTENT_ITEM_TYPE;
 		case POIS_SORTED:
 			return POIs.CONTENT_TYPE_SORTED;
 		default:

@@ -19,7 +19,7 @@ package org.wheelmap.android.service;
 
 import java.io.Serializable;
 
-import org.wheelmap.android.R;
+import org.wheelmap.android.online.R;
 
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -32,12 +32,17 @@ public class SyncServiceException extends RuntimeException implements Parcelable
 	public final static int ERROR_NETWORK_FAILURE = 0x0;
 	public final static int ERROR_INTERNAL_ERROR = 0x1;
 	public final static int ERROR_AUTHORIZATION_ERROR = 0x2;
+	public final static int ERROR_NOT_OSM_CONNECTED = 0x3;
+	public final static int ERROR_AUTHORIZATION_REQUIRED = 0x4;
+	public final static int ERROR_REQUEST_FORBIDDEN = 0x5;
 	
 	private final int[] errorString = {
 			R.string.error_network_failure,
 			R.string.error_internal_error,
 			R.string.error_authorization_error,
-			
+			R.string.error_not_osm_connected,
+			R.string.error_authorization_required,
+			R.string.error_request_forbidden,
 	};
 
 	public SyncServiceException(int id, Throwable t ) {

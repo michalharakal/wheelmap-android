@@ -19,7 +19,7 @@ package org.wheelmap.android.ui;
 
 import java.util.ArrayList;
 
-import org.wheelmap.android.R;
+import org.wheelmap.android.online.R;
 import org.wheelmap.android.ui.info.Info;
 import org.wheelmap.android.ui.info.InfoTypes;
 import org.wheelmap.android.ui.info.InfoWidgetsAdapter;
@@ -65,6 +65,12 @@ public class InfoActivity extends ListActivity {
 				R.string.info_android_development_two, 
 				"http://studiorutton.de",				
 				InfoTypes.WITH_TWO_LINKS );	   
+		infoList.add( info );
+		
+		info = new Info(
+				R.string.info_clientdevelopment, 
+				R.string.info_clientdevelopment_one, 
+				"", InfoTypes.SIMPLE_TEXT );	   
 		infoList.add( info );
 
 		// web development

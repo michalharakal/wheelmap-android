@@ -2,7 +2,7 @@ package org.wheelmap.android.ui.info;
 
 import java.util.List;
 
-import org.wheelmap.android.R;
+import org.wheelmap.android.online.R;
 
 import android.content.Context;
 import android.content.Intent;
@@ -169,7 +169,9 @@ public class InfoWidgetsAdapter extends BaseAdapter {
 
 	@Override
 	public boolean isEnabled(int position) {
-		if (infoList.get(position).getInfoType() == InfoTypes.WITH_TWO_LINKS)
+		if (infoList.get(position).getInfoType() == InfoTypes.WITH_TWO_LINKS ||
+				( infoList.get(position).getUrl() != null &&
+				infoList.get(position).getUrl().length() == 0))
 			return false;
 		else
 			return true;

@@ -13,9 +13,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
         
-*/
+ */
 
 package org.wheelmap.android.manager;
+
+import java.util.List;
 
 import org.wheelmap.android.utils.MultiResultReceiver;
 
@@ -28,12 +30,6 @@ import android.os.Handler;
 import android.os.ResultReceiver;
 import android.util.Log;
 
-/**
- * Provide centralized access to a good location.
- * It uses all location providers available and retrieves
- * with some heuristics the latest good location information.
- * @author Michal Harakal, Michael Kroez
- */
 public class MyLocationManager {
 	private final static String TAG = "mylocationmanager";
 
@@ -45,56 +41,49 @@ public class MyLocationManager {
 
 	private MyGPSLocationListener mGPSLocationListener;
 	private MyNetworkLocationListener mNetworkLocationListener;
-	private Location mBestLastKnownLocation;
+	private Location mCurrentBestLocation;
+	private List<String> mProviders;
 
 	private MultiResultReceiver mReceiver;
 
 	private boolean doesRequestUpdates;
-	private boolean wasLastKnownLocation;
-	private boolean gpsDisabled;
-	private boolean networkDisabled;
+	private boolean gpsExists;
+	private boolean networkExists;
+	private boolean wasBestLastKnownLocation;
 
 	private static final long TIME_DISTANCE_LIMIT = 1000 * 60 * 5; // 5 Minutes
 	private static final long TIME_GPS_UPDATE_INTERVAL = 1000 * 10;
 	private static final float TIME_GPS_UPDATE_DISTANCE = 20f;
-	private static final long TIME_NETWORK_SUPERSEED_TIME = 1000 * 25;
-	// private static final long TIME_GPS_SUPERSEED_TIME = 1000 * 9;
-	private static final float ACCURACY_MAX_REQUIRE = 500;
-	
-	/**
-	 * create instance. As MyLocationManager implements the singleton pattern
-	 * this method is private.
-	 * @param context application context to be used
-	 */
+
 	private MyLocationManager(Context context) {
 
 		mLocationManager = (LocationManager) context
 				.getSystemService(Context.LOCATION_SERVICE);
 
+		mProviders = mLocationManager.getAllProviders();
+		gpsExists = findProvider(LocationManager.GPS_PROVIDER);
+		networkExists = findProvider(LocationManager.NETWORK_PROVIDER);
+
 		mGPSLocationListener = new MyGPSLocationListener();
 		mNetworkLocationListener = new MyNetworkLocationListener();
 		mReceiver = new MultiResultReceiver(new Handler());
 
-		mBestLastKnownLocation = calcBestLastKnownLocation();
-		if (mBestLastKnownLocation == null) {
-			// Berlin, AndreasstraÔøΩe 10
-			mBestLastKnownLocation = new Location(LocationManager.NETWORK_PROVIDER);
-			mBestLastKnownLocation.setLongitude(13.431240);
-			mBestLastKnownLocation.setLatitude(52.512523);
-			mBestLastKnownLocation.setAccuracy(1000 * 100 );
+		mCurrentBestLocation = calcBestLastKnownLocation();
+		if (mCurrentBestLocation == null) {
+			// Berlin, Andreasstra�e 10
+			mCurrentBestLocation = new Location(
+					LocationManager.NETWORK_PROVIDER);
+			mCurrentBestLocation.setLongitude(13.431240);
+			mCurrentBestLocation.setLatitude(52.512523);
+			mCurrentBestLocation.setAccuracy(1000 * 100);
 		}
-		wasLastKnownLocation = true;
-		notifyReceiver();
-
+		wasBestLastKnownLocation = true;
+		
+		updateLocation( mCurrentBestLocation );
 		requestLocationUpdates();
 
 	}
 
-	/**
-	 * create or retrieve the singleton instance
-	 * @param context application context
-	 * @return instance of MyLocationManager
-	 */
 	public static MyLocationManager initOnce(Context context) {
 		if (INSTANCE == null) {
 			INSTANCE = new MyLocationManager(context);
@@ -103,21 +92,12 @@ public class MyLocationManager {
 		return INSTANCE;
 	}
 
-	/**
-	 * delete the singleton instance, detach all receivers and unregister from location updates
-	 */
 	public void clear() {
 		releaseLocationUpdates();
 		mReceiver.clearReceiver();
 		INSTANCE = null;
 	}
 
-	/**
-	 * Get the instance of the location manager and also register a new receiver.
-	 * @param receiver new receiver to be registered
-	 * @param resendLast true if last message shall be resent
-	 * @return singleton insatnce of MyLocationManager
-	 */
 	public static MyLocationManager get(ResultReceiver receiver,
 			boolean resendLast) {
 
@@ -125,56 +105,54 @@ public class MyLocationManager {
 		return INSTANCE;
 	}
 
-	/**
-	 * get the last "best" location calculated
-	 * @return latest location retrieved
-	 */
 	public Location getLastLocation() {
-		return mBestLastKnownLocation;
+		return mCurrentBestLocation;
 	}
 
-	/**
-	 * register a new result receiver
-	 * @param receiver new result receiver to register
-	 * @param resendLast true if the last message shall be resent
-	 */
 	public void register(ResultReceiver receiver, boolean resendLast) {
 		if (mReceiver.getReceiverCount() == 0) {
 			requestLocationUpdates();
 		}
-		if (receiver != null)
+		if (receiver != null) {
 			mReceiver.addReceiver(receiver, resendLast);
+		}
 	}
 
-	/**
-	 * register a new result receiver, don't send last message
-	 * @param receiver new result receiver to register
-	 */
 	public void release(ResultReceiver receiver) {
 		mReceiver.removeReceiver(receiver);
 		if (mReceiver.getReceiverCount() == 0)
 			releaseLocationUpdates();
 	}
 
-	/**
-	 * register for location updates from GPS and network
-	 */
+	private boolean findProvider(String find) {
+		for (String provider : mProviders) {
+			if (provider.equals(find))
+				return true;
+		}
+
+		return false;
+	}
+
 	private void requestLocationUpdates() {
+
 		if (!doesRequestUpdates) {
 			Log.d(TAG, "requestLocationUpdates");
-			mLocationManager.requestLocationUpdates(
-					LocationManager.GPS_PROVIDER, TIME_GPS_UPDATE_INTERVAL,
-					TIME_GPS_UPDATE_DISTANCE, mGPSLocationListener);
-			mLocationManager.requestLocationUpdates(
-					LocationManager.NETWORK_PROVIDER, 0, 0,
-					mNetworkLocationListener);
+
+			if (gpsExists) {
+				mLocationManager.requestLocationUpdates(
+						LocationManager.GPS_PROVIDER, TIME_GPS_UPDATE_INTERVAL,
+						TIME_GPS_UPDATE_DISTANCE, mGPSLocationListener);
+			}
+			
+			if (networkExists) {
+				mLocationManager.requestLocationUpdates(
+						LocationManager.NETWORK_PROVIDER, 0, 0,
+						mNetworkLocationListener);
+			}
 			doesRequestUpdates = true;
 		}
 	}
 
-	/**
-	 * unregister from location updates from GPS and network
-	 */
 	private void releaseLocationUpdates() {
 		Log.d(TAG, "releaseLocationUpdates");
 		mLocationManager.removeUpdates(mGPSLocationListener);
@@ -182,14 +160,6 @@ public class MyLocationManager {
 		doesRequestUpdates = false;
 	}
 
-	/**
-	 * use heuristic to calculate the best location to be used.
-	 * If only one provider has a location, return that.
-	 * If both network and GPS have a location, and the GPS is more recent
-	 * than TIME_DISTANCE_LIMIT, then return the GPS location.
-	 * Otherwise return the network location.
-	 * @return
-	 */
 	private Location calcBestLastKnownLocation() {
 		Location networkLocation = mLocationManager
 				.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
@@ -211,49 +181,26 @@ public class MyLocationManager {
 			return networkLocation;
 	}
 
-	/**
-	 * send a message with the last best retrieved location to all registered receivers
-	 */
-	private void notifyReceiver() {
-		Bundle b = new Bundle();
-		b.putParcelable(EXTRA_LOCATION_MANAGER_LOCATION, mBestLastKnownLocation);
-		mReceiver.send(WHAT_LOCATION_MANAGER_UPDATE, b);
-	}
-
-	/**
-	 * inner class for GPS location updates
-	 * 
-	 * @author Michal Harakal, Michael Kroez
-	 *
-	 */
 	private class MyGPSLocationListener implements LocationListener {
 
 		@Override
 		public void onLocationChanged(Location location) {
 			Log.d(TAG, "MyGPSLocationListener: location received. Accuracy = "
 					+ location.getAccuracy());
-			wasLastKnownLocation = false;
-			
-			if ( networkDisabled )
+
+			if ( wasBestLastKnownLocation || isBetterLocation( location, mCurrentBestLocation )) {
+				Log.d( TAG, "gps location superseeds mCurrentBestLocation location" );
 				updateLocation( location );
-			if ( mBestLastKnownLocation.getProvider().equals(LocationManager.NETWORK_PROVIDER) &&
-					location.getProvider().equals( LocationManager.GPS_PROVIDER ) &&
-					mBestLastKnownLocation.getAccuracy() > location.getAccuracy()) {
-				updateLocation( location );
-			} else if ( mBestLastKnownLocation.getProvider().equals( LocationManager.GPS_PROVIDER ) &&
-					location.getProvider().equals( LocationManager.GPS_PROVIDER )) {
-				updateLocation( location );
+				wasBestLastKnownLocation = false;
 			}
 		}
 
 		@Override
 		public void onProviderDisabled(String provider) {
-			gpsDisabled = true;
 		}
 
 		@Override
 		public void onProviderEnabled(String provider) {
-			gpsDisabled = false;
 		}
 
 		@Override
@@ -261,69 +208,103 @@ public class MyLocationManager {
 		}
 	}
 
-	/**
-	 * inner class for network location updates
-	 * 
-	 * @author Michal Harakal, Michael Kroez
-	 *
-	 */
 	private class MyNetworkLocationListener implements LocationListener {
 		@Override
 		public void onLocationChanged(Location location) {
 			Log.d(TAG,
 					"MyNetworkLocationListener: location received. Accuracy = "
 							+ location.getAccuracy());
-			long now = System.currentTimeMillis();
-			if ( gpsDisabled )
+			if ( wasBestLastKnownLocation || isBetterLocation( location, mCurrentBestLocation )) {
+				Log.d( TAG, "network location superseeds mCurrentBestLocation location" );
 				updateLocation( location );
-			if (wasLastKnownLocation
-					&& (now - mBestLastKnownLocation.getTime()) > TIME_NETWORK_SUPERSEED_TIME) {
-				Log.d(TAG, "network location superseeds lastKnownLocation");
-				updateLocation( location );
-			} else if ((mBestLastKnownLocation.getProvider()
-					.equals(LocationManager.GPS_PROVIDER))
-					&& (now - mBestLastKnownLocation.getTime() > TIME_NETWORK_SUPERSEED_TIME)
-					&& (location.getAccuracy() < ACCURACY_MAX_REQUIRE)) {
-				Log.d(TAG, "network location superseeds old gps location");
-				updateLocation( location );
-			} else if (mBestLastKnownLocation.getProvider().equals(
-					LocationManager.NETWORK_PROVIDER)
-					&& mBestLastKnownLocation.getAccuracy() >= location
-							.getAccuracy()) {
-				Log.d(TAG, "network location superseeds old network location");
-				updateLocation( location );
+				wasBestLastKnownLocation = false;
 			}
 		}
 
 		@Override
 		public void onProviderDisabled(String provider) {
-			networkDisabled = true;
 		}
 
 		@Override
 		public void onProviderEnabled(String provider) {
-			networkDisabled = false;
 		}
 
 		@Override
 		public void onStatusChanged(String provider, int status, Bundle extras) {
 		}
 	}
-
-	/*
+	
 	public interface LocationUpdate {
 		public void onNewLocation(Location location);
 	}
-	*/
+
+	public void updateLocation(Location location) {
+		mCurrentBestLocation = location;
+		Bundle b = new Bundle();
+		b.putParcelable(EXTRA_LOCATION_MANAGER_LOCATION, location);
+		mReceiver.send(WHAT_LOCATION_MANAGER_UPDATE, b);
+	}
 	
-	/**
-	 * function called by location providers when a new location is received
-	 * @param location new location to be sent to all receivers
-	 */
-	private void updateLocation( Location location ) {
-		mBestLastKnownLocation = location;
-		wasLastKnownLocation = false;
-		notifyReceiver();
+	private static final int TWO_MINUTES = 1000 * 60 * 2;
+
+	/** Determines whether one Location reading is better than the current Location fix
+	  * @param location  The new Location that you want to evaluate
+	  * @param currentBestLocation  The current Location fix, to which you want to compare the new one
+	  */
+	protected boolean isBetterLocation(Location location, Location currentBestLocation) {
+	    if (currentBestLocation == null) {
+	        // A new location is always better than no location
+	        return true;
+	    }
+
+	    // Check whether the new location fix is newer or older
+	    // Log.d( TAG, "location.getTime = " + location.getTime() + " currentBestLocation.getTime() = " + currentBestLocation.getTime());
+	    long timeDelta = location.getTime() - currentBestLocation.getTime();
+	    boolean isSignificantlyNewer = timeDelta > TWO_MINUTES;
+	    boolean isSignificantlyOlder = timeDelta < -TWO_MINUTES;
+	    boolean isNewer = timeDelta > 0;
+	    
+	    // Log.d( TAG, "isSignificantlyNewer = " + isSignificantlyNewer + " isSignificantlyOlder = " + isSignificantlyOlder + " timeDelta = " + timeDelta );
+
+	    // If it's been more than two minutes since the current location, use the new location
+	    // because the user has likely moved
+	    if (isSignificantlyNewer) {
+	        return true;
+	    // If the new location is more than two minutes older, it must be worse
+	    }
+	    /*
+	    else if (isSignificantlyOlder) {
+	        return false;
+	    }
+	     */
+
+	    // Check whether the new location fix is more or less accurate
+	    int accuracyDelta = (int) (location.getAccuracy() - currentBestLocation.getAccuracy());
+	    boolean isLessAccurate = accuracyDelta > 0;
+	    boolean isMoreAccurate = accuracyDelta < 0;
+	    boolean isSignificantlyLessAccurate = accuracyDelta > 200;
+
+	    // Check if the old and new location are from the same provider
+	    boolean isFromSameProvider = isSameProvider(location.getProvider(),
+	            currentBestLocation.getProvider());
+
+	    // Determine location quality using a combination of timeliness and accuracy
+	    if (isMoreAccurate) {
+	        return true;
+	    } else if (isNewer && !isLessAccurate) {
+	        return true;
+	    } else if (isNewer && !isSignificantlyLessAccurate && isFromSameProvider) {
+	        return true;
+	    }
+	    return false;
+	}
+
+	/** Checks whether two providers are the same */
+	private boolean isSameProvider(String provider1, String provider2) {
+	    if (provider1 == null) {
+	      return provider2 == null;
+	    }
+	    return provider1.equals(provider2);
 	}
 
 }
